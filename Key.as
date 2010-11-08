@@ -3,7 +3,7 @@
 * Created by player_03
 * Anyone may use or modify this code for any purpose
 */
-package {
+package AS3Utils {
 	import flash.utils.ByteArray;
 	import flash.events.KeyboardEvent;
 	import flash.display.Stage;
