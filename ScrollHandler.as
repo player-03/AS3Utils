@@ -1,4 +1,9 @@
-﻿package  {
+/*
+* ScrollHandler.as - a class to prevent the mouse wheel from scrolling the page for AS3 games
+* Created by player_03
+* Anyone may use or modify this code for any purpose
+*/
+package AS3Utils {
 	import flash.text.TextField;
 	import flash.display.Stage;
 	import flash.events.MouseEvent;
@@ -13,6 +18,8 @@
 		private var container:DisplayObjectContainer;
 		
 		//sets up the ScrollHandler
+		//stage must be a reference to the stage
+		//initWidth and initHeight are optional, but not specifying them may lead to erratic behavior
 		public function ScrollHandler(stage:Stage, initWidth:Number = NaN, initHeight:Number = NaN) {
 			//create the text field
 			super();
