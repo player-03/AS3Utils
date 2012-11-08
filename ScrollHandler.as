@@ -1,8 +1,7 @@
 /*
-* ScrollHandler.as - a class to prevent the mouse wheel from scrolling the page for AS3 games
-* Created by player_03
-* Anyone may use or modify this code for any purpose
-*/
+ * ScrollHandler.as - created by Joseph Cloutier.
+ * Licensed under CC0 (http://creativecommons.org/publicdomain/zero/1.0/).
+ */
 package AS3Utils {
 	import flash.text.TextField;
 	import flash.display.Stage;
@@ -12,24 +11,27 @@ package AS3Utils {
 	import flash.display.InteractiveObject;
 	import flash.geom.Point;
 	
+	/**
+	 * A text field that covers a certain portion of the stage and absorbs mouse wheel events,
+	 * preventing them from scrolling the webpage.
+	 */
 	public class ScrollHandler extends TextField {
 		//the default scroll position
 		private var defaultScrollV:int;
-		private var container:DisplayObjectContainer;
 		
-		//sets up the ScrollHandler
-		//stage must be a reference to the stage
-		//initWidth and initHeight are optional, but not specifying them may lead to erratic behavior
-		public function ScrollHandler(stage:Stage, initWidth:Number = NaN, initHeight:Number = NaN) {
+		public var targetObject:InteractiveObject;
+		
+		/**
+		 * Sets up the ScrollHandler.
+		 * @param stage A reference to the stage.
+		 * @param initWidth The width of the area to cover.
+		 * @param initHeight The width of the area to cover.
+		 * @param targetObject The object to pass mouse events to. If this isn't specified, mouse
+		 * events will be passed to an object behind this that is under the mouse.
+		 */
+		public function ScrollHandler(stage:Stage, initWidth:Number = NaN, initHeight:Number = NaN, targetObject:InteractiveObject = null) {
 			//create the text field
 			super();
-			
-			//record the container object
-			container = stage.getChildAt(0) as DisplayObjectContainer;
-			if(container == null) {
-				//use the stage as the container if the root cannot be found
-				container = stage;
-			}
 			
 			//if initWidth and/or initHeight wasn't provided, set it based on the stage
 			if(isNaN(initWidth)) {
@@ -39,30 +41,33 @@ package AS3Utils {
 				initHeight = stage.height;
 			}
 			
+			//record the target object
+			this.targetObject = targetObject;
+			
 			//set up the text field
 			width = initWidth;
 			height = initHeight;
 			selectable = false;
 			multiline = true;
+			wordWrap = false;
+			
+			textColor = 0x00FF00;
 			
 			//input blank lines until the text field can scroll
+			//(apply a minimum and a maximum because this apparently isn't reliable)
 			var i:int;
-			for(i = 0; maxScrollV == 1; i++) {
+			for(i = 0; i <= 20 || maxScrollV == 1 && i < 5000; i++) {
 				appendText("\n");
 			}
 			
 			//input a number of additional lines, to make sure the text field has plenty of room to scroll
-			for(; i >= -10; i--) {
-				appendText("\n\n");
+			for(i *= 3; i >= -20; i--) {
+				appendText("\n");
 			}
 			
 			//scroll halfway down the text field
 			defaultScrollV = int(maxScrollV / 2);
 			scrollV = defaultScrollV;
-			
-			//add this to the stage on top of any currently existing objects
-			//any objects added later will show up on top of this, possibly causing the scrolling mechanism to stop working
-			stage.addChild(this);
 			
 			//pass all mouse events on to the display object below this
 			addEventListener(MouseEvent.CLICK, onMouseEvent);
@@ -74,21 +79,52 @@ package AS3Utils {
 			addEventListener(MouseEvent.MOUSE_WHEEL, onMouseEvent);
 		}
 		
-		//passes the given mouse event on to the display object below this
-		private var displayObjectList:Array;
 		private var prevDisplayObject:DisplayObject = null;
+		private var displayObjectIndex:int;
 		private var currentDisplayObject:DisplayObject;
 		private var tempPoint:Point;
+		
+		/**
+		 * Passes the given mouse event on to the display object below this.
+		 */
 		private function onMouseEvent(e:MouseEvent):void {
-			//get all objects contained by the container object under the given point
-			tempPoint = new Point(e.stageX, e.stageY);
-			displayObjectList = container.getObjectsUnderPoint(tempPoint);
+			if(e.type == MouseEvent.MOUSE_WHEEL && scrollV == maxScrollV) {
+				appendText("\n\n");
+				defaultScrollV = int(maxScrollV / 2);
+			}
 			
-			//find the top display object under the current point, if there is one
-			if(displayObjectList.length != 0) {
-				currentDisplayObject = displayObjectList[displayObjectList.length - 1] as DisplayObject;
+			//reset scrollV
+			scrollV = defaultScrollV;
+			
+			if(parent == null) {
+				return;
+			}
+			
+			//if the target object is defined, simply use it
+			if(targetObject != null) {
+				currentDisplayObject = targetObject;
 			} else {
+				//get all objects contained by the parent object under the given point
+				tempPoint = new Point(e.stageX, e.stageY);
+				var displayObjectList:Array = parent.getObjectsUnderPoint(tempPoint);
+				
+				//find the top display object under the current point, if there is one
 				currentDisplayObject = null;
+				for(displayObjectIndex = displayObjectList.length - 1; displayObjectIndex > 0; displayObjectIndex--) {
+					currentDisplayObject = displayObjectList[displayObjectIndex] as DisplayObject;
+					
+					if(currentDisplayObject != null && currentDisplayObject != this) {
+						break;
+					}
+				}
+			}
+			
+			//make sure to avoid errors
+			if(currentDisplayObject == null || currentDisplayObject == this) {
+				return;
+			}
+			if(prevDisplayObject == null) {
+				prevDisplayObject = currentDisplayObject;
 			}
 			
 			//check if a rollOver/rollOut event needs to be passed
@@ -124,15 +160,12 @@ package AS3Utils {
 			//pass the given event type on to the current display object
 			if(currentDisplayObject != null) {
 				tempPoint = currentDisplayObject.globalToLocal(new Point(e.stageX, e.stageY));
+				
 				currentDisplayObject.dispatchEvent(new MouseEvent(e.type, e.bubbles, e.cancelable, tempPoint.x, tempPoint.y,
 																  null, e.ctrlKey, e.altKey, e.shiftKey, e.buttonDown, e.delta));
 			}
 			
 			prevDisplayObject = currentDisplayObject;
-			
-			//reset scrollV
-			//scrolling is applied after this event listener is called, so add e.delta to counteract it
-			scrollV = defaultScrollV + e.delta;
 		}
 	}
 }
