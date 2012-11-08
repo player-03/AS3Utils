@@ -1,28 +1,34 @@
 /*
-* Key.as - a replacement for the AS2 Key class
-* Created by player_03
-* Anyone may use or modify this code for any purpose
-*/
+ * Key.as - created by Joseph Cloutier.
+ * Licensed under CC0 (http://creativecommons.org/publicdomain/zero/1.0/).
+ */
 package AS3Utils {
+	import flash.events.Event;
 	import flash.utils.ByteArray;
 	import flash.events.KeyboardEvent;
 	import flash.display.Stage;
 	
+	/**
+	 * A replacement for the AS2 Key class. Provides static access to the keys currently pressed.
+	 */
 	public class Key {
 		private static var keyArray:ByteArray = new ByteArray(), mostRecentKey:uint = 0;
 		
 		private static const arrayLength:int = 222;
 		
-		//sets up the array and adds the appropriate event listeners
+		/**
+		 * Initializes the class. Required before this will be able to provide any information.
+		 * @param stage A reference to the stage.
+		 */
 		public static function init(stage:Stage):void {
 			keyArray.length = arrayLength;
 			
 			stage.addEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler);
 			stage.addEventListener(KeyboardEvent.KEY_UP, keyUpHandler);
+			stage.addEventListener(Event.DEACTIVATE, clearAll);
 		}
 		
-		//records when a key is pressed
-		public static function keyDownHandler(event:KeyboardEvent):void {
+		private static function keyDownHandler(event:KeyboardEvent):void {
 			mostRecentKey = event.keyCode;
 			if(mostRecentKey > arrayLength)
 				return;
@@ -31,20 +37,25 @@ package AS3Utils {
 			keyArray.writeBoolean(true);
 		}
 		
-		//records when a key is released
-		public static function keyUpHandler(event:KeyboardEvent):void {
+		private static function keyUpHandler(event:KeyboardEvent):void {
 			clearKey(event.keyCode);
 		}
 		
-		//clears all keys, whether or not they were released
-		public static function clearAll():void {
+		/**
+		 * Clears all keys, whether or not they were released. This can be useful in case Flash
+		 * missed the KEY_UP event. (Which happens if the player clicks off or right-clicks before
+		 * releasing the key.)
+		 */
+		public static function clearAll(e:Event = null):void {
 			keyArray.position = 0;
-			for(var index = 0; index <= arrayLength; index++) {
+			for(var index:int = 0; index <= arrayLength; index++) {
 				keyArray.writeBoolean(false);
 			}
 		}
 		
-		//clears the given key, whether or not it was released
+		/**
+		 * Clears the given key, whether or not it was released.
+		 */
 		public static function clearKey(keyCode:int):void {
 			if(keyCode > arrayLength)
 				return;
@@ -53,13 +64,18 @@ package AS3Utils {
 			keyArray.writeBoolean(false);
 		}
 		
-		//clears the most recently pressed key
-		//warning: if this key is still being pressed, it will most likely be recorded again
+		/**
+		 * Clears the most recently pressed key. Warning: if this key is still being pressed,
+		 * it will most likely be recorded again almost immediately.
+		 */
 		public static function clearMostRecent():void {
+			clearKey(mostRecentKey);
 			mostRecentKey = 0;
 		}
 		
-		//returns whether or not the given key is down
+		/**
+		 * @return Whether the given key is currently pressed.
+		 */
 		public static function isDown(keyCode:int):Boolean {
 			if(keyCode > keyArray.length || keyCode < 0)
 				return(false);
@@ -67,12 +83,16 @@ package AS3Utils {
 			return (keyArray.readBoolean());
 		}
 		
-		//returns the most recently pressed key
+		/**
+		 * @return The key code of the most recently pressed key.
+		 */
 		public static function getCode():int {
 			return mostRecentKey;
 		}
 		
-		//returns a string containing the name of the given key
+		/**
+		 * @return A string containing a human-readable name for the given key.
+		 */
 		public static function keyCodeToString(keyCode:int):String {
 			//if keyCode matches the ASCII value (that is, if the value is alphanumeric)
 			if(48 <= keyCode && keyCode <= 57 || 65 <= keyCode && keyCode <= 90) {
@@ -206,5 +226,62 @@ package AS3Utils {
 					return("Key #" + keyCode);
 			}
 		}
+		
+		//enumeration of common keys
+		//(note that the flash.ui.Keyboard class provides a more thorough enumeration)
+		public static const BACKSPACE:int = 8;
+		public static const TAB:int = 9;
+		public static const ENTER:int = 13;
+		public static const SHIFT:int = 16;
+		public static const CTRL:int = 17;
+		public static const ESC:int = 27;
+		public static const SPACE:int = 32;
+		public static const END:int = 35;
+		public static const HOME:int = 36;
+		public static const INSERT:int = 45;
+		public static const DELETE:int = 46;
+		public static const LEFT:int = 37;
+		public static const UP:int = 38;
+		public static const RIGHT:int = 39;
+		public static const DOWN:int = 40;
+		public static const ZERO:int = 48;
+		public static const ONE:int = 49;
+		public static const TWO:int = 50;
+		public static const THREE:int = 51;
+		public static const FOUR:int = 52;
+		public static const FIVE:int = 53;
+		public static const SIX:int = 54;
+		public static const SEVEN:int = 55;
+		public static const EIGHT:int = 56;
+		public static const NINE:int = 57;
+		public static const A:int = 65;
+		public static const B:int = 66;
+		public static const C:int = 67;
+		public static const D:int = 68;
+		public static const E:int = 69;
+		public static const F:int = 70;
+		public static const G:int = 71;
+		public static const H:int = 72;
+		public static const I:int = 73;
+		public static const J:int = 74;
+		public static const K:int = 75;
+		public static const L:int = 76;
+		public static const M:int = 77;
+		public static const N:int = 78;
+		public static const O:int = 79;
+		public static const P:int = 80;
+		public static const Q:int = 81;
+		public static const R:int = 82;
+		public static const S:int = 83;
+		public static const T:int = 84;
+		public static const U:int = 85;
+		public static const V:int = 86;
+		public static const W:int = 87;
+		public static const X:int = 88;
+		public static const Y:int = 89;
+		public static const Z:int = 90;
+		public static const SEMICOLON:int = 186;
+		public static const COMMA:int = 188;
+		public static const PERIOD:int = 190;
 	}
 }
